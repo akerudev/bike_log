@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BikeLog</title>
+<style>
+  :root { --green:#3B6D11;--green-light:#EAF3DE;--green-mid:#639922;--amber:#854F0B;--amber-light:#FAEEDA;--blue:#185FA5;--blue-light:#E6F1FB;--teal:#0F6E56;--teal-light:#E1F5EE;--gray:#444441;--gray-light:#F1EFE8;--gray-mid:#888780;--radius:12px;--radius-sm:8px; }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Trebuchet MS',sans-serif;background:#f5f7f2;min-height:100vh;color:#2C2C2A;}
+  .header{background:#27500A;color:#EAF3DE;padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;}
+  .logo{font-size:22px;font-weight:700;letter-spacing:-.5px;}
+  .logo span{color:#97C459;}
+  .nav{display:flex;background:#fff;border-bottom:.5px solid #D3D1C7;}
+  .nav button{flex:1;padding:10px 0;border:none;background:none;font-size:12px;color:#888780;cursor:pointer;border-bottom:2px solid transparent;font-family:inherit;}
+  .nav button.active{color:#3B6D11;border-bottom-color:#3B6D11;font-weight:600;}
+  .page{display:none;padding:16px;}
+  .page.active{display:block;}
+  .card{background:#fff;border-radius:var(--radius);border:.5px solid #D3D1C7;padding:16px;margin-bottom:12px;}
+  .card h3{font-size:12px;color:var(--gray-mid);margin-bottom:14px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12px;color:var(--gray-mid);margin-bottom:4px;font-weight:500;}
+  .field input,.field textarea,.field select{width:100%;padding:9px 12px;border:.5px solid #D3D1C7;border-radius:var(--radius-sm);font-size:15px;font-family:inherit;background:#FAFAF9;color:#2C2C2A;outline:none;}
+  .field input:focus,.field textarea:focus{border-color:#639922;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .btn-primary{width:100%;background:#27500A;color:#EAF3DE;border:none;border-radius:var(--radius-sm);padding:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:4px;}
+  .btn-secondary{width:100%;background:#fff;color:#27500A;border:.5px solid #639922;border-radius:var(--radius-sm);padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;}
+  .btn-secondary:active,.btn-primary:active{opacity:.85;}
+  .btn-danger{width:100%;background:#fff;color:#993C1D;border:.5px solid #D85A30;border-radius:var(--radius-sm);padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px;}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+  .stat-card{background:#fff;border-radius:var(--radius);border:.5px solid #D3D1C7;padding:14px;text-align:center;}
+  .stat-val{font-size:26px;font-weight:700;line-height:1.1;}
+  .stat-label{font-size:11px;color:var(--gray-mid);margin-top:2px;text-transform:uppercase;letter-spacing:.4px;}
+  .stat-card.green .stat-val{color:var(--green);}
+  .stat-card.amber .stat-val{color:var(--amber);}
+  .stat-card.blue .stat-val{color:var(--blue);}
+  .stat-card.teal .stat-val{color:var(--teal);}
+  .chart-wrap{background:#fff;border-radius:var(--radius);border:.5px solid #D3D1C7;padding:16px;margin-bottom:12px;}
+  .chart-title{font-size:12px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;font-weight:600;}
+  .bar-chart{display:flex;align-items:flex-end;gap:6px;height:120px;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;}
+  .bar{width:100%;border-radius:4px 4px 0 0;background:#97C459;min-height:2px;transition:height .3s;}
+  .bar-label{font-size:9px;color:var(--gray-mid);text-align:center;}
+  .bar-km{font-size:10px;color:var(--green);font-weight:600;}
+  .ride-item{background:#fff;border-radius:var(--radius);border:.5px solid #D3D1C7;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;}
+  .ride-icon{width:40px;height:40px;border-radius:50%;background:var(--green-light);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .ride-info{flex:1;}
+  .ride-km{font-size:18px;font-weight:700;color:var(--green);}
+  .ride-details{font-size:12px;color:var(--gray-mid);margin-top:2px;}
+  .ride-date{font-size:11px;color:var(--gray-mid);text-align:right;}
+  .ride-note{font-size:12px;color:#5F5E5A;margin-top:4px;font-style:italic;}
+  .empty{text-align:center;padding:40px 20px;color:var(--gray-mid);font-size:14px;}
+  .delete-btn{background:none;border:none;color:#D85A30;font-size:16px;cursor:pointer;padding:4px;}
+  .month-header{font-size:11px;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 6px;font-weight:600;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#27500A;color:#EAF3DE;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .3s;z-index:999;pointer-events:none;}
+  .toast.show{opacity:1;}
+  .db-info{background:var(--green-light);border:.5px solid #C0DD97;border-radius:var(--radius-sm);padding:10px 14px;font-size:12px;color:#3B6D11;margin-bottom:12px;line-height:1.6;}
+  .import-area{border:1.5px dashed #C0DD97;border-radius:var(--radius-sm);padding:20px;text-align:center;color:var(--gray-mid);font-size:13px;cursor:pointer;margin-bottom:8px;}
+  .import-area:hover{background:var(--green-light);}
+  #import-file{display:none;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">Bike<span>Log</span></div>
+    <div style="font-size:12px;color:#9FE1CB;margin-top:2px;">Il tuo diario in bici</div>
+  </div>
+  <div style="text-align:right">
+    <div style="font-size:20px;font-weight:700;color:#EAF3DE" id="header-tot">0 km</div>
+    <div style="font-size:12px;color:#9FE1CB">totali percorsi</div>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="active" onclick="showPage('add')">+ Aggiungi</button>
+  <button onclick="showPage('stats')">Statistiche</button>
+  <button onclick="showPage('history')">Storico</button>
+  <button onclick="showPage('db')">Database</button>
+</nav>
+
+<!-- ADD -->
+<div id="page-add" class="page active">
+  <div class="card">
+    <h3>Nuova uscita</h3>
+    <div class="field"><label>Data</label><input type="date" id="f-date"></div>
+    <div class="row2">
+      <div class="field"><label>Distanza (km)</label><input type="number" id="f-km" placeholder="0.0" step="0.1" min="0"></div>
+      <div class="field"><label>Dislivello (m)</label><input type="number" id="f-elev" placeholder="0" step="1" min="0"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Durata (hh:mm)</label><input type="text" id="f-duration" placeholder="01:30"></div>
+      <div class="field"><label>Tipo bici</label>
+        <select id="f-type">
+          <option value="🚴">🚴 Strada</option>
+          <option value="🚵">🚵 MTB</option>
+          <option value="⚡">⚡ E-bike</option>
+          <option value="🚲">🚲 City</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Note</label><textarea id="f-note" rows="2" placeholder="Percorso, sensazioni..."></textarea></div>
+    <button class="btn-primary" onclick="saveRide()">Salva uscita</button>
+  </div>
+</div>
+
+<!-- STATS -->
+<div id="page-stats" class="page">
+  <div class="stats-grid">
+    <div class="stat-card green"><div class="stat-val" id="s-tot">0</div><div class="stat-label">km totali</div></div>
+    <div class="stat-card amber"><div class="stat-val" id="s-rides">0</div><div class="stat-label">uscite</div></div>
+    <div class="stat-card blue"><div class="stat-val" id="s-avg">0</div><div class="stat-label">km medi</div></div>
+    <div class="stat-card teal"><div class="stat-val" id="s-elev">0</div><div class="stat-label">dislivello m</div></div>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title">Ultimi 8 mesi — km percorsi</div>
+    <div class="bar-chart" id="bar-chart"></div>
+  </div>
+  <div class="card" id="best-card" style="display:none">
+    <h3>Migliore uscita</h3>
+    <div id="best-content"></div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div id="page-history" class="page">
+  <div id="history-list"></div>
+</div>
+
+<!-- DATABASE -->
+<div id="page-db" class="page">
+  <div class="db-info" id="db-info">Caricamento...</div>
+
+  <div class="card">
+    <h3>Esporta backup</h3>
+    <p style="font-size:13px;color:#5F5E5A;margin-bottom:12px;line-height:1.6">Scarica tutti i tuoi dati in un file JSON. Conservalo in un posto sicuro (Google Drive, iCloud, ecc.).</p>
+    <button class="btn-secondary" onclick="exportJSON()">⬇ Scarica bikelog_backup.json</button>
+  </div>
+
+  <div class="card">
+    <h3>Importa / Ripristina</h3>
+    <p style="font-size:13px;color:#5F5E5A;margin-bottom:12px;line-height:1.6">Importa un backup JSON precedentemente esportato. I dati esistenti verranno <strong>uniti</strong> senza duplicati.</p>
+    <div class="import-area" onclick="document.getElementById('import-file').click()">
+      Tocca per selezionare un file .json
+    </div>
+    <input type="file" id="import-file" accept=".json,application/json" onchange="importJSON(event)">
+    <button class="btn-secondary" onclick="document.getElementById('import-file').click()">⬆ Scegli file JSON</button>
+  </div>
+
+  <div class="card">
+    <h3>Azzera database</h3>
+    <p style="font-size:13px;color:#993C1D;margin-bottom:12px;line-height:1.6">Elimina tutte le uscite salvate. Operazione irreversibile — esegui prima un backup!</p>
+    <button class="btn-danger" onclick="clearAll()">🗑 Cancella tutti i dati</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const MONTHS=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+function getData(){try{return JSON.parse(localStorage.getItem('bikelog')||'[]');}catch(e){return[];}}
+function saveData(d){localStorage.setItem('bikelog',JSON.stringify(d));}
+function formatDate(s){if(!s)return'';const p=s.split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+
+function toast(msg,col){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.background=col||'#27500A';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+
+function saveRide(){
+  const km=parseFloat(document.getElementById('f-km').value);
+  if(!km||km<=0){alert('Inserisci i km percorsi!');return;}
+  const ride={id:Date.now(),date:document.getElementById('f-date').value,km,elev:parseInt(document.getElementById('f-elev').value)||0,duration:document.getElementById('f-duration').value||'',type:document.getElementById('f-type').value,note:document.getElementById('f-note').value.trim()};
+  const data=getData(); data.unshift(ride); saveData(data);
+  document.getElementById('f-km').value='';
+  document.getElementById('f-elev').value='';
+  document.getElementById('f-duration').value='';
+  document.getElementById('f-note').value='';
+  updateAll(); toast('✓ Uscita salvata!'); showPage('history');
+}
+
+function deleteRide(id){
+  if(!confirm('Eliminare questa uscita?'))return;
+  saveData(getData().filter(r=>r.id!==id));
+  updateAll(); toast('Uscita eliminata','#993C1D');
+}
+
+function exportJSON(){
+  const data=getData();
+  if(!data.length){alert('Nessun dato da esportare!');return;}
+  const blob=new Blob([JSON.stringify({app:'BikeLog',exported:new Date().toISOString(),rides:data},null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='bikelog_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('✓ Backup scaricato!');
+}
+
+function importJSON(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const parsed=JSON.parse(e.target.result);
+      const imported=parsed.rides||parsed;
+      if(!Array.isArray(imported))throw new Error('Formato non valido');
+      const existing=getData();
+      const existingIds=new Set(existing.map(r=>r.id));
+      const newRides=imported.filter(r=>!existingIds.has(r.id));
+      const merged=[...existing,...newRides].sort((a,b)=>b.date.localeCompare(a.date));
+      saveData(merged);
+      updateAll();
+      toast('✓ Importate '+newRides.length+' nuove uscite!');
+    }catch(err){
+      alert('Errore nel file JSON: '+err.message);
+    }
+    event.target.value='';
+  };
+  reader.readAsText(file);
+}
+
+function clearAll(){
+  if(!confirm('Sei sicuro? Tutti i dati verranno eliminati definitivamente.\n\nEsegui prima un backup!'))return;
+  localStorage.removeItem('bikelog');
+  updateAll(); toast('Database azzerato','#993C1D');
+}
+
+function updateDbInfo(){
+  const data=getData();
+  const bytes=JSON.stringify(data).length;
+  const kb=(bytes/1024).toFixed(1);
+  document.getElementById('db-info').innerHTML=
+    '<strong>'+data.length+'</strong> uscite salvate &nbsp;·&nbsp; <strong>'+kb+' KB</strong> utilizzati &nbsp;·&nbsp; Archiviazione: localStorage';
+}
+
+function updateAll(){
+  const data=getData();
+  const tot=data.reduce((s,r)=>s+r.km,0);
+  const totElev=data.reduce((s,r)=>s+r.elev,0);
+  document.getElementById('header-tot').textContent=tot.toFixed(1)+' km';
+  document.getElementById('s-tot').textContent=tot.toFixed(1);
+  document.getElementById('s-rides').textContent=data.length;
+  document.getElementById('s-avg').textContent=data.length?(tot/data.length).toFixed(1):'0';
+  document.getElementById('s-elev').textContent=totElev.toLocaleString('it');
+
+  const now=new Date();
+  const months=[];
+  for(let i=7;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months.push({y:d.getFullYear(),m:d.getMonth(),km:0,label:MONTHS[d.getMonth()]});
+  }
+  data.forEach(r=>{
+    if(!r.date)return;
+    const p=r.date.split('-');
+    const y=parseInt(p[0]),mo=parseInt(p[1])-1;
+    const found=months.find(x=>x.y===y&&x.m===mo);
+    if(found)found.km+=r.km;
+  });
+  const maxKm=Math.max(...months.map(x=>x.km),1);
+  document.getElementById('bar-chart').innerHTML=months.map(m=>`<div class="bar-col"><div class="bar-km">${m.km>0?m.km.toFixed(0):''}</div><div class="bar" style="height:${Math.round((m.km/maxKm)*100)}px"></div><div class="bar-label">${m.label}</div></div>`).join('');
+
+  if(data.length){
+    const best=data.reduce((a,b)=>b.km>a.km?b:a);
+    document.getElementById('best-card').style.display='block';
+    document.getElementById('best-content').innerHTML=`<div style="display:flex;align-items:center;gap:10px"><div style="font-size:28px">${best.type}</div><div><div style="font-size:22px;font-weight:700;color:#3B6D11">${best.km.toFixed(1)} km</div><div style="font-size:13px;color:#888780">${formatDate(best.date)}${best.duration?' · '+best.duration:''}${best.elev?' · ↑'+best.elev+'m':''}</div>${best.note?'<div style="font-size:12px;color:#5F5E5A;margin-top:4px;font-style:italic">'+best.note+'</div>':''}</div></div>`;
+  } else {
+    document.getElementById('best-card').style.display='none';
+  }
+
+  const hl=document.getElementById('history-list');
+  if(!data.length){hl.innerHTML='<div class="empty">Nessuna uscita registrata.<br>Aggiungi la tua prima pedalata!</div>';updateDbInfo();return;}
+  let html='',lastMonth='';
+  data.forEach(r=>{
+    const mk=r.date?r.date.slice(0,7):'sconosciuto';
+    const[y,mo]=mk.split('-');
+    const mLabel=mo?MONTHS[parseInt(mo)-1]+' '+y:mk;
+    if(mk!==lastMonth){html+=`<div class="month-header">${mLabel}</div>`;lastMonth=mk;}
+    html+=`<div class="ride-item"><div class="ride-icon">${r.type||'🚴'}</div><div class="ride-info"><div class="ride-km">${r.km.toFixed(1)} km</div><div class="ride-details">${r.duration?'⏱ '+r.duration:''}${r.elev?'  ↑ '+r.elev+'m':''}</div>${r.note?'<div class="ride-note">'+r.note+'</div>':''}</div><div><div class="ride-date">${formatDate(r.date)}</div><button class="delete-btn" onclick="deleteRide(${r.id})">✕</button></div></div>`;
+  });
+  hl.innerHTML=html;
+  updateDbInfo();
+}
+
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach((b,i)=>{b.classList.toggle('active',['add','stats','history','db'][i]===name);});
+  document.getElementById('page-'+name).classList.add('active');
+  if(name==='db')updateDbInfo();
+}
+
+updateAll();
+</script>
+</body>
+</html>
